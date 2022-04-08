@@ -1,5 +1,6 @@
 from random import randint
 
+
 class Dot:
     def __init__(self, x, y):
         self.x = x
@@ -54,17 +55,16 @@ class Ship:
 
         return ship_dots
 
-#     def shooten(self, shot):
-#         return shot in self.dots
+    def shooten(self, shot):
+        return shot in self.dots
 
 
 class Board:
-    def __init__(self, hid=True, size=6, line = 0):
+    def __init__(self, hid=False, size=6):
         self.size = size
         self.hid = hid
-        self.line = line
+
         self.count = 0
-        self.i = 0
 
         self.field = [["O"] * size for _ in range(size)]
 
@@ -96,33 +96,13 @@ class Board:
                     if verb:
                         self.field[cur.x][cur.y] = "."
                     self.busy.append(cur)
-    def print_file(self, init):
-        # with open('test.txt', "w+") as f:
-        #     i = sum(1 for _ in f)
-        if init == 1:
-            if self.i == 0:
-                data_file = open('test.txt', 'w+', encoding="utf-8")
-                data_file.seek(0)
-                data_file.close()
-                self.i += self.i
-            data_file = open("test.txt", "a+", encoding="utf-8")
-            data_file.write("%s\n" % (self.field))
-            if self.hid:
-               data_file.write("%s\n" % str(self.field).replace("■", "O"))
-            data_file.close()
-        elif init == 0:
-            with open("test.txt", "r", encoding="utf-8") as f:
-                first = f.readline()
-                second = f.readline()
-            with open("test.txt", "r", encoding="utf-8") as f:
-                old_file = f.read()
-                new_first = old_file.replace(first, "%s\n" % self.field)
-                new_second = old_file.replace(second, "%s\n" % str(self.field).replace("■", "O"))
-            with open("test.txt", "w", encoding="utf-8") as f:
-                if self.line == 0:
-                    f.write(new_first)
-                elif self.line == 1:
-                    f.write(new_second)
+
+    def __str__(self):
+        res = str(self.field)
+        if self.hid:
+            res = res.replace("■", "O")
+        return res
+
     def out(self, d):
         return not ((0 <= d.x < self.size) and (0 <= d.y < self.size))
 
@@ -139,19 +119,16 @@ class Board:
             if d in ship.dots:
                 ship.lives -= 1
                 self.field[d.x][d.y] = "X"
-                self.print_file(0)
                 if ship.lives == 0:
                     self.count += 1
                     self.contour(ship, verb=True)
-                    self.print_file(0)
                     print("Корабль уничтожен!")
                     return False
                 else:
                     print("Корабль ранен!")
                     return True
 
-        self.field[d.x][d.y] = "T"
-        self.print_file(0)
+        self.field[d.x][d.y] = "."
         print("Мимо!")
         return False
 
@@ -208,13 +185,12 @@ class Game:
     def __init__(self, size=6):
         self.size = size
         pl = self.random_board()
-        pl.line = 0
         co = self.random_board()
         co.hid = True
-        co.line = 1
 
         self.ai = AI(co, pl)
         self.us = User(pl, co)
+
     def random_board(self):
         board = None
         while board is None:
@@ -236,7 +212,6 @@ class Game:
                     break
                 except BoardWrongShipException:
                     pass
-        board.print_file(1)
         board.begin()
         return board
 
@@ -251,20 +226,17 @@ class Game:
         print(" y - номер столбца ")
 
     def print_boards(self):
-        f = open("test.txt", "r", encoding="utf-8")
-        l1 = f.readline()
-        l2 = f.readline()
-        lst1 = eval(l1)
-        lst2 = eval(l2)
         res = ""
-        res += "  | 1 | 2 | 3 | 4 | 5 | 6 |" + " "*5 + "  | 1 | 2 | 3 | 4 | 5 | 6 |"
-        for i, row in enumerate(lst1):
+        res += "  | 1 | 2 | 3 | 4 | 5 | 6 |" + " " * 5 + "  | 1 | 2 | 3 | 4 | 5 | 6 |"
+        for i, row in enumerate(eval(str(self.us.board))):
             res += "             "
             res += f"\n{i + 1} | " + " | ".join(row) + " |"
-            for j, row1 in enumerate(lst2):
+            for j, row1 in enumerate(eval(str(self.ai.board))):
                 if j == i:
                     res += f"     {i + 1} | " + " | ".join(row1) + " |"
         print(res)
+
+
     def loop(self):
         num = 0
         while True:
@@ -292,12 +264,13 @@ class Game:
             if self.us.board.count == 7:
                 print("-" * 20)
                 print("Компьютер выиграл!")
-
                 break
             num += 1
 
     def start(self):
         self.greet()
         self.loop()
+
+
 g = Game()
 g.start()
